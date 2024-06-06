@@ -1,0 +1,9 @@
+setup.py
+Accounts_Companion/__init__.py
+Accounts_Companion/core.py
+Accounts_Companion/interface.py
+Accounts_Companion.egg-info/PKG-INFO
+Accounts_Companion.egg-info/SOURCES.txt
+Accounts_Companion.egg-info/dependency_links.txt
+Accounts_Companion.egg-info/entry_points.txt
+Accounts_Companion.egg-info/top_level.txt

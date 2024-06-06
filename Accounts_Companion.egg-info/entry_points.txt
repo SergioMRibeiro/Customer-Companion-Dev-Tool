@@ -1,0 +1,2 @@
+[console_scripts]
+appStart = Accounts_Companion.core:main

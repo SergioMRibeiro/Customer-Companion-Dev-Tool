@@ -1,0 +1,11 @@
+{
+  "vendor-collection": [
+    {
+      "vendor-name": "meuvendoio",
+      "site": "meusite.com",
+      "store-name": "nomesite",
+      "last-ws": "none",
+      "directory": "none"
+    }
+  ]
+}
