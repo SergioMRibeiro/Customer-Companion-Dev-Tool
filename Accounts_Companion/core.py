@@ -3,7 +3,7 @@ from Accounts_Companion.interface import run_interface
 
 
 def main():
-    print("Hello, World!")
+    print("Ainda em desenvolvimento")
 
     run_interface()
 

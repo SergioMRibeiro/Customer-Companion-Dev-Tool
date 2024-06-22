@@ -20,7 +20,7 @@ output_result_text = "Tenha uma ótima aventura Vtex :D"
 def read_json():
     with open(file_path, 'r') as file:
         return json.load(file)
-    
+
 def write_json(data):
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=2)
@@ -68,8 +68,39 @@ def who_am_i_rules(string):
     else:
         return None
 
-def on_button_click(vendor_name, store_name):
-    messagebox.showinfo("Vendor Information", f"Vendor Name: {vendor_name}\nStore Name: {store_name}")
+def extract_app_sections(text):
+    # Separar os blocos de texto por quebras de linha duplas
+    sections = text.strip().split("\n\n")
+
+    # Dicionário para armazenar os blocos
+    apps_dict = {
+        "edition_apps": [],
+        "installed_apps": [],
+        "linked_apps": []
+    }
+
+    # Identificar cada seção pelo seu cabeçalho
+    for section in sections:
+        if section.startswith("Edition Apps"):
+            apps_dict["edition_apps"].append(section)
+        elif section.startswith("Installed Apps"):
+            apps_dict["installed_apps"].append(section)
+        elif section.startswith("Linked Apps"):
+            apps_dict["linked_apps"].append(section)
+    
+    # Concatenar as listas em strings
+    edition_apps = "\n\n".join(apps_dict["edition_apps"])
+    installed_apps = "\n\n".join(apps_dict["installed_apps"])
+    linked_apps = "\n\n".join(apps_dict["linked_apps"])
+
+    return edition_apps, installed_apps, linked_apps
+
+def on_vendor_button_click(vendor_name, store_name):
+    try:
+        subprocess.check_output(f'vtex switch {vendor_name}', shell=True, stderr=subprocess.STDOUT)
+        get_who_am_i()
+    except subprocess.CalledProcessError as error:
+        update_output_text("Ocorreu um erro:", error.output.decode('utf-8'))
 
 def update_output_text(new_text):
     global output_result_text, output_text_widget
@@ -79,32 +110,39 @@ def update_output_text(new_text):
     output_text_widget.insert("1.0", output_result_text)
     output_text_widget.config(state="disabled")  # Voltar ao modo de apenas leitura
 
-def basic_info_pull():
-    print("infomações básicas: blá blá blá")
+def open_web_site_pull():
+    print("Abrir site final")
 
 def get_vtex_apps():
-    print("rodar vtex ls e listar apps")
+    try:
+        vtex_ls_result = subprocess.check_output('vtex ls', shell=True, stderr=subprocess.STDOUT)
+        decoded_result = vtex_ls_result.decode('utf-8')
+        edition, installed, linked = extract_app_sections(decoded_result)
+        update_output_text(f'{linked}\n\n\n{installed}\n\n\n{edition}')
+    except subprocess.CalledProcessError as error:
+        update_output_text("Ocorreu um erro:", error.output.decode('utf-8'))
 
 def verify_existent_ws():
-    print("rodar vtex worksapce list")
+    try:
+        ws_list_result = subprocess.check_output('vtex workspace list', shell=True, stderr=subprocess.STDOUT)
+        decoded_result = ws_list_result.decode('utf-8')
+        update_output_text(ws_list_result)
+    except subprocess.CalledProcessError as e:
+        update_output_text(f"Ocorreu um erro: {e.output.decode('utf-8')}")
 
 def get_who_am_i():
     try:
         who_am_i_result = subprocess.check_output('vtex whoami', shell=True, stderr=subprocess.STDOUT)
         decoded_result = who_am_i_result.decode('utf-8')
         update_output_text(who_am_i_rules(decoded_result))
-        print(who_am_i_rules(decoded_result))
     except subprocess.CalledProcessError as e:
-        print("Ocorreu um erro:", e.output.decode('utf-8'))
+        update_output_text("Ocorreu um erro:", e.output.decode('utf-8'))
 
-def activate_las_ws():
+def activate_last_ws():
     print("Rodar um vtex use com o ultimo ws usado")
 
 def on_info_button_click():
     messagebox.showinfo("Informações do Customer Companion Dev Tool", f"Versão: 0.0.1\nCriado por: Sérgio Moreira Ribeiro\ndata de criação: 19/06/2024\n\n\nÉ um prazer poder contribuir com você! Caso tenha alguma ideia de como melhorar esse programa pode me produrar pelo LinkedIn :D")
-    print("Botão 'i' clicado!")
-
-
 
 def refresh_vendor_list(root):
     vendors = read_json()
@@ -137,8 +175,9 @@ def create_vendor_select_area(root, vendor_collection):
         vendor_name = vendor['vendor-name']
         store_name = vendor['store-name']
         button_text = f"{vendor_name}\n{store_name}"
-        vendor_select_button = tk.Button(vendor_select_area_frame, text=button_text, command=lambda vn=vendor_name, sn=store_name: on_button_click(vn, sn))
+        vendor_select_button = tk.Button(vendor_select_area_frame, text=button_text, command=lambda vn=vendor_name, sn=store_name: on_vendor_button_click(vn, sn))
         vendor_select_button.grid(row=index, column=0, padx=5, pady=5, sticky="ew")
+
 
 
 def create_informative_controls(root):
@@ -147,19 +186,19 @@ def create_informative_controls(root):
     informative_btn_frame.grid_rowconfigure(0, weight=1)
     informative_btn_frame.grid_columnconfigure(0, weight=1)
 
-    primary_info_btn = tk.Button(informative_btn_frame, text="Informações básicas", command=basic_info_pull)
+    primary_info_btn = tk.Button(informative_btn_frame, text="Abrir site final", command=open_web_site_pull, state='disable')
     primary_info_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
     get_vtex_apps_btn = tk.Button(informative_btn_frame, text="Apps instalados", command=get_vtex_apps)
     get_vtex_apps_btn.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
 
-    verify_existent_ws_btn = tk.Button(informative_btn_frame, text="Verificar ws existente", command=basic_info_pull)
+    verify_existent_ws_btn = tk.Button(informative_btn_frame, text="Verificar ws existente", command=verify_existent_ws)
     verify_existent_ws_btn.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
-    who_am_i_btn = tk.Button(informative_btn_frame, text="Verificar agora", command=get_who_am_i)
+    who_am_i_btn = tk.Button(informative_btn_frame, text="Verificar ambiente atual", command=get_who_am_i)
     who_am_i_btn.grid(row=3, column=0, padx=5, pady=5, sticky="ew")
 
-    activate_last_ws_btn = tk.Button(informative_btn_frame, text="Ativar ultimo WS", command=get_vtex_apps)
+    activate_last_ws_btn = tk.Button(informative_btn_frame, text="Ativar ultimo WS", command=get_vtex_apps, state='disable')
     activate_last_ws_btn.grid(row=4, column=0, padx=5, pady=5, sticky="ew")
 
 def create_creation_area(root):
@@ -224,12 +263,18 @@ def create_info_display(root):
     output_color_frame.grid(row=0, column=0, sticky="nsew")
     output_color_frame.grid_rowconfigure(0, weight=1)
     output_color_frame.grid_columnconfigure(0, weight=1)
+    
+    scrollbar = tk.Scrollbar(output_color_frame)
+    scrollbar.grid(row=0, column=1, sticky="ns")
+    
 
     # Configuração do widget de texto
-    output_text_widget = tk.Text(output_color_frame, wrap="word", relief="flat", bg=output_back_ground_color)
+    output_text_widget = tk.Text(output_color_frame, wrap="word", relief="flat", bg=output_back_ground_color, yscrollcommand=scrollbar.set)
     output_text_widget.insert("1.0", output_result_text)
     output_text_widget.config(state="disabled")  # Faz o texto ser apenas leitura
     output_text_widget.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
+    
+    scrollbar.config(command=output_text_widget.yview)
 
 
 def create_quit_and_refresh_content_button(root):    
@@ -245,7 +290,7 @@ def create_quit_and_refresh_content_button(root):
 def run_interface():
     root = tk.Tk()
     root.title("Customer Companion Dev Tool")
-    root.geometry("800x600")
+    root.geometry("900x600")
 
     root.grid_columnconfigure(0, weight=1, minsize=150)
     root.grid_columnconfigure(1, weight=1, minsize=250)
