@@ -6,8 +6,12 @@ import subprocess
 import re
 
 current_path = os.getcwd()
-
 file_path = os.path.join(current_path, 'Accounts_Companion', 'configs.json')
+output_back_ground_color='#fffcbc'
+danger_back_ground_color='#6a3131'
+primary_back_ground_color='#31557f'
+output_text_widget = None
+output_result_text = "Tenha uma ótima aventura Vtex :D"
 
 ########################################################
 ################################# Funcionalidades
@@ -60,25 +64,20 @@ def who_am_i_rules(string):
         workspace = result.group(4)
         
         # Retorna as informações capturadas
-        return vendor, email, ambient, workspace
+        return f"Vendor: {vendor}\nWorkspace: {workspace}\nAmbiente: {ambient}\nLogado com email: {email}"
     else:
         return None
 
 def on_button_click(vendor_name, store_name):
     messagebox.showinfo("Vendor Information", f"Vendor Name: {vendor_name}\nStore Name: {store_name}")
 
-def test_function():
-    add_vendor_to_collection( 'novovendor', 'novosite.com', 'nomesite2', 'none', 'none')
-    
-    # try:
-    #     saida1 = subprocess.check_output('vtex whoami', shell=True, stderr=subprocess.STDOUT)
-    #     saida_decodificada1 = saida1.decode('utf-8')
-    #     print(who_am_i_rules(saida_decodificada1))
-
-    #     saida2 = subprocess.check_output('vtex ls', shell=True, stderr=subprocess.STDOUT)
-    #     saida_decodificada2 = saida2.decode('utf-8')
-    # except subprocess.CalledProcessError as e:
-    #     print("Ocorreu um erro:", e.output.decode('utf-8'))
+def update_output_text(new_text):
+    global output_result_text, output_text_widget
+    output_result_text = new_text
+    output_text_widget.config(state="normal")  # Permitir edição temporária
+    output_text_widget.delete("1.0", tk.END)
+    output_text_widget.insert("1.0", output_result_text)
+    output_text_widget.config(state="disabled")  # Voltar ao modo de apenas leitura
 
 def basic_info_pull():
     print("infomações básicas: blá blá blá")
@@ -92,8 +91,9 @@ def verify_existent_ws():
 def get_who_am_i():
     try:
         who_am_i_result = subprocess.check_output('vtex whoami', shell=True, stderr=subprocess.STDOUT)
-        saida_decodificada1 = who_am_i_result.decode('utf-8')
-        print(who_am_i_rules(saida_decodificada1))
+        decoded_result = who_am_i_result.decode('utf-8')
+        update_output_text(who_am_i_rules(decoded_result))
+        print(who_am_i_rules(decoded_result))
     except subprocess.CalledProcessError as e:
         print("Ocorreu um erro:", e.output.decode('utf-8'))
 
@@ -118,16 +118,10 @@ def refresh_vendor_list(root):
 data = read_json()
 vendors = data['vendor-collection']
 
-output_result_text = 'Tenha uma ótima aventura Vtex :D'
-output_back_ground_color='#fffcbc'
-danger_back_ground_color='#6a3131'
-primary_back_ground_color='#31557f'
-
-
 
 def create_info_button(root):
     info_button = tk.Button(root, text="i", command=on_info_button_click, fg="#000000", font=("Arial", 12, "bold"), relief="flat")
-    info_button.place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
+    info_button.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)
 
 def create_vendor_select_area(root, vendor_collection):
     # Remove os widgets existentes antes de recriar
@@ -213,30 +207,34 @@ def create_creation_area(root):
     teste_btn.grid(row=8, column=1, padx=5, pady=10, sticky="ew")
 
 def create_info_display(root):
+    global output_text_widget
+
+    # Configuração do frame principal
     info_display_frame = tk.LabelFrame(root, text="Informações", padx=10, pady=10)
     info_display_frame.grid(row=0, column=2, rowspan=2, padx=10, pady=10, sticky="nsew")
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_columnconfigure(2, weight=1)
 
     info_display_frame.grid_rowconfigure(0, weight=1)
     info_display_frame.grid_columnconfigure(0, weight=1)
 
+
+    # Configuração do frame de cor de fundo
     output_color_frame = tk.Frame(info_display_frame, bg=output_back_ground_color)
     output_color_frame.grid(row=0, column=0, sticky="nsew")
+    output_color_frame.grid_rowconfigure(0, weight=1)
+    output_color_frame.grid_columnconfigure(0, weight=1)
 
-
-    # output_text = tk.Label(output_color_frame, text=output_result_text, bg=output_back_ground_color)
-    # output_text.grid(column=0, row=0)
-
-    # Uso do widget Text para exibir texto interativo e selecionável
-    output_text = tk.Text(output_color_frame, bg=output_back_ground_color, wrap="word", relief="flat")
-    output_text.insert("1.0", output_result_text)
-    output_text.config(state="disabled")  # Faz o texto ser apenas leitura
-    output_text.grid(column=0, row=0, sticky="n", padx=10, pady=10)
-
+    # Configuração do widget de texto
+    output_text_widget = tk.Text(output_color_frame, wrap="word", relief="flat", bg=output_back_ground_color)
+    output_text_widget.insert("1.0", output_result_text)
+    output_text_widget.config(state="disabled")  # Faz o texto ser apenas leitura
+    output_text_widget.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
 
 
 def create_quit_and_refresh_content_button(root):    
     quit_and_refresh_container = tk.Frame(root)
-    quit_and_refresh_container.grid(row=2, column=0, columnspan=3, sticky="w")
+    quit_and_refresh_container.grid(row=2, column=0, pady=10, columnspan=3, sticky="w")
     
     refresh_content_button = tk.Button(quit_and_refresh_container, text="Sair", command=root.quit, font=("Arial", 9, "normal"),  bg=danger_back_ground_color, foreground='#ffffff')
     refresh_content_button.grid(row=0, column=0, padx=10, sticky="w")
