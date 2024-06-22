@@ -13,7 +13,7 @@ file_path = os.path.join(current_path, 'Accounts_Companion', 'configs.json')
 ################################# Funcionalidades
 ########################################################
 
-def read_json(file_path):
+def read_json():
     with open(file_path, 'r') as file:
         return json.load(file)
     
@@ -22,7 +22,7 @@ def write_json(data):
         json.dump(data, file, indent=2)
 
 def add_vendor_to_collection(vendor_name, site, store_name, directory):
-    data = read_json(file_path)
+    data = read_json()
 
     new_vendor = {
         "vendor-name": vendor_name,
@@ -37,12 +37,12 @@ def add_vendor_to_collection(vendor_name, site, store_name, directory):
     write_json(data)
 
 def remove_vendor_from_collection(search_value):
-    # Ler o JSON atual
-    data = read_json(file_path)
-
+    data = read_json()
     # Encontrar o dicionário com 'vendor-name' igual a search_value
     for vendor in data["vendor-collection"]:
+        print('To chegando aqui',search_value, vendor.get('vendor-name'), search_value == vendor.get('vendor-name'))
         if vendor.get('vendor-name') == search_value:
+            print('Achei o danado')
             data["vendor-collection"].remove(vendor)
             break  # Parar o loop assim que o primeiro fornecedor for removido
 
@@ -68,7 +68,7 @@ def on_button_click(vendor_name, store_name):
     messagebox.showinfo("Vendor Information", f"Vendor Name: {vendor_name}\nStore Name: {store_name}")
 
 def test_function():
-    add_vendor_to_collection(file_path, 'novovendor', 'novosite.com', 'nomesite2', 'none', 'none')
+    add_vendor_to_collection( 'novovendor', 'novosite.com', 'nomesite2', 'none', 'none')
     
     # try:
     #     saida1 = subprocess.check_output('vtex whoami', shell=True, stderr=subprocess.STDOUT)
@@ -105,37 +105,47 @@ def on_info_button_click():
     print("Botão 'i' clicado!")
 
 
+
+def refresh_vendor_list(root):
+    vendors = read_json()
+    create_vendor_select_area(root,  vendors["vendor-collection"])
+    
+
 ########################################################
 ################################# Elementos da interface
 ########################################################
 
-data = read_json(file_path)
+data = read_json()
 vendors = data['vendor-collection']
 
 output_result_text = 'Tenha uma ótima aventura Vtex :D'
 output_back_ground_color='#fffcbc'
+danger_back_ground_color='#6a3131'
+primary_back_ground_color='#31557f'
 
-def create_refresh_content_button(root):
-    # TODO Tranformar essa função em um frame para comportar os botões de atualizar vendor e fechar
-    refresh_content_button = tk.Button(root, text="Sair", command=root.quit, font=("Arial", 9, "normal"),  bg='#6a3131', foreground='#ffffff')
-    refresh_content_button.grid(row=2, column=0, columnspan=3, sticky="w")
+
 
 def create_info_button(root):
     info_button = tk.Button(root, text="i", command=on_info_button_click, fg="#000000", font=("Arial", 12, "bold"), relief="flat")
     info_button.place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20)
 
-def create_vendor_select_area(root):
+def create_vendor_select_area(root, vendor_collection):
+    # Remove os widgets existentes antes de recriar
+    for widget in root.grid_slaves(row=0, column=0):
+        widget.destroy()
+
     vendor_select_area_frame = tk.Frame(root)
     vendor_select_area_frame.grid(row=0, column=0, rowspan=2, padx=10, pady=10, sticky="ns")
     vendor_select_area_frame.grid_rowconfigure(0, weight=0)
     vendor_select_area_frame.grid_columnconfigure(0, weight=1)
 
-    for index, vendor in enumerate(vendors):
+    for index, vendor in enumerate(vendor_collection):
         vendor_name = vendor['vendor-name']
         store_name = vendor['store-name']
         button_text = f"{vendor_name}\n{store_name}"
         vendor_select_button = tk.Button(vendor_select_area_frame, text=button_text, command=lambda vn=vendor_name, sn=store_name: on_button_click(vn, sn))
         vendor_select_button.grid(row=index, column=0, padx=5, pady=5, sticky="ew")
+
 
 def create_informative_controls(root):
     informative_btn_frame = tk.LabelFrame(root, text="Acesso aos Informativos", padx=10, pady=10)
@@ -190,15 +200,15 @@ def create_creation_area(root):
 
 
     # btn ações
-    quitBtn = tk.Button(creation_area_frame, text="Deletar Vendor", command=lambda: remove_vendor_from_collection('novovendor2'), bg='#6a3131', foreground='#ffffff')
+    quitBtn = tk.Button(creation_area_frame, text="Deletar Vendor", command=lambda: remove_vendor_from_collection(vendor_input.get()), bg=danger_back_ground_color, foreground='#ffffff')
     quitBtn.grid(row=8, column=0, padx=5, pady=10, sticky="ew")
 
-    teste_btn = tk.Button(creation_area_frame, text="Teste algo aqui", command=lambda: add_vendor_to_collection(
+    teste_btn = tk.Button(creation_area_frame, text="Salvar Vendor", command=lambda: add_vendor_to_collection(
         vendor_input.get(),
         store_home_page_input.get(),
         store_name_input.get(),
         directory_input.get()
-    ), bg='#31557f', foreground='#ffffff')
+    ), bg=primary_back_ground_color, foreground='#ffffff')
     
     teste_btn.grid(row=8, column=1, padx=5, pady=10, sticky="ew")
 
@@ -222,6 +232,18 @@ def create_info_display(root):
     output_text.config(state="disabled")  # Faz o texto ser apenas leitura
     output_text.grid(column=0, row=0, sticky="n", padx=10, pady=10)
 
+
+
+def create_quit_and_refresh_content_button(root):    
+    quit_and_refresh_container = tk.Frame(root)
+    quit_and_refresh_container.grid(row=2, column=0, columnspan=3, sticky="w")
+    
+    refresh_content_button = tk.Button(quit_and_refresh_container, text="Sair", command=root.quit, font=("Arial", 9, "normal"),  bg=danger_back_ground_color, foreground='#ffffff')
+    refresh_content_button.grid(row=0, column=0, padx=10, sticky="w")
+
+    refresh_content_button = tk.Button(quit_and_refresh_container, text="Atualizar lista de vendor", command=lambda: refresh_vendor_list(root), font=("Arial", 9, "normal"),  bg=primary_back_ground_color, foreground='#ffffff')
+    refresh_content_button.grid(row=0, column=1, padx=10, sticky="w")
+
 def run_interface():
     root = tk.Tk()
     root.title("Customer Companion Dev Tool")
@@ -232,11 +254,11 @@ def run_interface():
     root.grid_columnconfigure(2, weight=2, minsize=400)
 
     create_info_button(root)
-    create_vendor_select_area(root)
+    create_vendor_select_area(root, data["vendor-collection"])
     create_informative_controls(root)
     create_creation_area(root)
     create_info_display(root)
-    create_refresh_content_button(root)
+    create_quit_and_refresh_content_button(root)
 
     root.mainloop()
 
