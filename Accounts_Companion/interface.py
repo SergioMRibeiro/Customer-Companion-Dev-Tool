@@ -1,12 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
-import json
-import os
+from .files_services import read_json, write_json
 import subprocess
 import re
 
-current_path = os.getcwd()
-file_path = os.path.join(current_path, 'Accounts_Companion', 'configs.json')
+
+
 output_back_ground_color='#fffcbc'
 danger_back_ground_color='#6a3131'
 primary_back_ground_color='#31557f'
@@ -17,13 +16,8 @@ output_result_text = "Tenha uma ótima aventura Vtex :D"
 ################################# Funcionalidades
 ########################################################
 
-def read_json():
-    with open(file_path, 'r') as file:
-        return json.load(file)
 
-def write_json(data):
-    with open(file_path, 'w') as file:
-        json.dump(data, file, indent=2)
+
 
 def add_vendor_to_collection(vendor_name, site, store_name, directory):
     data = read_json()
@@ -37,6 +31,8 @@ def add_vendor_to_collection(vendor_name, site, store_name, directory):
     }
 
     data["vendor-collection"].append(new_vendor)
+
+    update_output_text(f"vendor-name: {vendor_name},\nsite: {site},\nstore-name: {store_name},\nlast-ws: {''},\ndirectory: {directory}\n")
 
     write_json(data)
 
@@ -100,7 +96,7 @@ def on_vendor_button_click(vendor_name, store_name):
         subprocess.check_output(f'vtex switch {vendor_name}', shell=True, stderr=subprocess.STDOUT)
         get_who_am_i()
     except subprocess.CalledProcessError as error:
-        update_output_text("Ocorreu um erro:", error.output.decode('utf-8'))
+        update_output_text(f"Ocorreu um erro:\n {error}")
 
 def update_output_text(new_text):
     global output_result_text, output_text_widget
@@ -120,7 +116,7 @@ def get_vtex_apps():
         edition, installed, linked = extract_app_sections(decoded_result)
         update_output_text(f'{linked}\n\n\n{installed}\n\n\n{edition}')
     except subprocess.CalledProcessError as error:
-        update_output_text("Ocorreu um erro:", error.output.decode('utf-8'))
+        update_output_text(f"Ocorreu um erro:\n {error}")
 
 def verify_existent_ws():
     try:
@@ -128,7 +124,7 @@ def verify_existent_ws():
         decoded_result = ws_list_result.decode('utf-8')
         update_output_text(ws_list_result)
     except subprocess.CalledProcessError as e:
-        update_output_text(f"Ocorreu um erro: {e.output.decode('utf-8')}")
+        update_output_text(f"Ocorreu um erro:\n {e.output.decode('utf-8')}")
 
 def get_who_am_i():
     try:
@@ -136,7 +132,7 @@ def get_who_am_i():
         decoded_result = who_am_i_result.decode('utf-8')
         update_output_text(who_am_i_rules(decoded_result))
     except subprocess.CalledProcessError as e:
-        update_output_text("Ocorreu um erro:", e.output.decode('utf-8'))
+        update_output_text(f"Ocorreu um erro:\n {e}")
 
 def activate_last_ws():
     print("Rodar um vtex use com o ultimo ws usado")
@@ -147,7 +143,7 @@ def on_info_button_click():
 def refresh_vendor_list(root):
     vendors = read_json()
     create_vendor_select_area(root,  vendors["vendor-collection"])
-    
+
 
 ########################################################
 ################################# Elementos da interface
@@ -177,8 +173,6 @@ def create_vendor_select_area(root, vendor_collection):
         button_text = f"{vendor_name}\n{store_name}"
         vendor_select_button = tk.Button(vendor_select_area_frame, text=button_text, command=lambda vn=vendor_name, sn=store_name: on_vendor_button_click(vn, sn))
         vendor_select_button.grid(row=index, column=0, padx=5, pady=5, sticky="ew")
-
-
 
 def create_informative_controls(root):
     informative_btn_frame = tk.LabelFrame(root, text="Acesso aos Informativos", padx=10, pady=10)
@@ -233,17 +227,23 @@ def create_creation_area(root):
 
 
     # btn ações
-    quitBtn = tk.Button(creation_area_frame, text="Deletar Vendor", command=lambda: remove_vendor_from_collection(vendor_input.get()), bg=danger_back_ground_color, foreground='#ffffff')
-    quitBtn.grid(row=8, column=0, padx=5, pady=10, sticky="ew")
+    deletar_vendor_btn = tk.Button(creation_area_frame, text="Deletar Vendor", command=lambda:( remove_vendor_from_collection(vendor_input.get()), refresh_vendor_list(root)), bg=danger_back_ground_color, foreground='#ffffff')
+    deletar_vendor_btn.grid(row=8, column=0, padx=5, pady=10, sticky="ew")
 
-    teste_btn = tk.Button(creation_area_frame, text="Salvar Vendor", command=lambda: add_vendor_to_collection(
-        vendor_input.get(),
-        store_home_page_input.get(),
-        store_name_input.get(),
-        directory_input.get()
-    ), bg=primary_back_ground_color, foreground='#ffffff')
+    create_vendor_btn = tk.Button(creation_area_frame,
+        text="Salvar Vendor", 
+        command=lambda: (add_vendor_to_collection(
+                vendor_input.get(),
+                store_home_page_input.get(),
+                store_name_input.get(),
+                directory_input.get(),
+            ),
+                refresh_vendor_list(root)
+            ), 
+        bg=primary_back_ground_color,
+        foreground='#ffffff')
     
-    teste_btn.grid(row=8, column=1, padx=5, pady=10, sticky="ew")
+    create_vendor_btn.grid(row=8, column=1, padx=5, pady=10, sticky="ew")
 
 def create_info_display(root):
     global output_text_widget
@@ -275,7 +275,6 @@ def create_info_display(root):
     output_text_widget.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
     
     scrollbar.config(command=output_text_widget.yview)
-
 
 def create_quit_and_refresh_content_button(root):    
     quit_and_refresh_container = tk.Frame(root)
