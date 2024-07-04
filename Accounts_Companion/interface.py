@@ -32,7 +32,7 @@ def add_vendor_to_collection(vendor_name, site, store_name, directory):
 
     data["vendor-collection"].append(new_vendor)
 
-    update_output_text(f"vendor-name: {vendor_name},\nsite: {site},\nstore-name: {store_name},\nlast-ws: {''},\ndirectory: {directory}\n")
+    update_output_text(f"vendor-name: {vendor_name}\nsite: {site}\nstore-name: {store_name}\nlast-ws: {''}\ndirectory: {directory}\n")
 
     write_json(data)
 
@@ -40,9 +40,7 @@ def remove_vendor_from_collection(search_value):
     data = read_json()
     # Encontrar o dicionário com 'vendor-name' igual a search_value
     for vendor in data["vendor-collection"]:
-        print('To chegando aqui',search_value, vendor.get('vendor-name'), search_value == vendor.get('vendor-name'))
         if vendor.get('vendor-name') == search_value:
-            print('Achei o danado')
             data["vendor-collection"].remove(vendor)
             break  # Parar o loop assim que o primeiro fornecedor for removido
 
