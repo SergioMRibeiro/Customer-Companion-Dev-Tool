@@ -138,6 +138,36 @@ def activate_last_ws():
 def on_info_button_click():
     messagebox.showinfo("Informações do Customer Companion Dev Tool", f"Versão: 0.0.1\nCriado por: Sérgio Moreira Ribeiro\ndata de criação: 19/06/2024\n\n\nÉ um prazer poder contribuir com você! Caso tenha alguma ideia de como melhorar esse programa pode me produrar pelo LinkedIn :D")
 
+def on_tutorial_button_click():
+    tutorial_text = """Como usar:
+    
+    requisitos: ter vtex cli atualizado instalado.
+    
+    1 - Crie seu primeiro vendor
+        1.1 - preencha o pequeno form com o vendor;
+        1.2 - qualquer outra informação é opcional, mas serve para ser utilizado em certos comandos.
+        1.3 - após campos preenchidos clique em salvar vendor
+    
+    2 - Utilizando o vendor:
+        2.1 - No lado esquerdo da tela, basta selecionar o vendor desejado e clica-lo
+    
+    3 - Executando comandos:
+        3.1 - Alguns comandos já estão mapeados e podem ser utilizados, localizado no centro da tela.
+        3.2 - 'Verificar ambiente atual': vtex whoami
+        3.3 - 'Verificar ws existente': vtex workspace list
+        3.4 - 'Aoos instalados': vtex ls
+        3.5 - Botões não listados acima ainda estão desativados
+    
+    4 - Deletando vendor
+        4.1 - preencha o pequeno form com o vendor; 
+        4.2 - clique no botão "Deletar vendor"
+    
+    5 - Display:
+        5.1 - Qualquer resposta da vtex será exibida na parte amarelada da janela
+    """
+    
+    update_output_text(tutorial_text)
+
 def refresh_vendor_list(root):
     vendors = read_json()
     create_vendor_select_area(root,  vendors["vendor-collection"])
@@ -154,6 +184,10 @@ vendors = data['vendor-collection']
 def create_info_button(root):
     info_button = tk.Button(root, text="i", command=on_info_button_click, fg="#000000", font=("Arial", 12, "bold"), relief="flat")
     info_button.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)
+
+def create_tutorial_button(root):
+    tutorial_button = tk.Button(root, text="?", command=on_tutorial_button_click, fg="#000000", font=("Arial", 12, "bold"), relief="flat")
+    tutorial_button.place(relx=1.0, rely=1.0, anchor="se", x=-25, y=-10)
 
 def create_vendor_select_area(root, vendor_collection):
     # Remove os widgets existentes antes de recriar
@@ -298,6 +332,7 @@ def run_interface():
     create_informative_controls(root)
     create_creation_area(root)
     create_info_display(root)
+    create_tutorial_button(root)
     create_quit_and_refresh_content_button(root)
 
     root.mainloop()
